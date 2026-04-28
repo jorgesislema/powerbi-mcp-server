@@ -1,0 +1,21 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.log
+.pytest_cache/
+# mcp.json has machine-specific absolute paths — exclude it
+.vscode/mcp.json
+*.pbix
+
+# Local virtual env used by contributors
+.venv/
+
+# Vendor DLLs for ADOMD/TOM
+vendor/
+
+# Generated artifacts and caches
+artifacts/
+.mypy_cache/
+*.egg-info/
+.ven

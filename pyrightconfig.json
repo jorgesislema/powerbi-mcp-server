@@ -1,0 +1,12 @@
+{
+  "include": ["src", "scripts", "examples", "tests"],
+  "exclude": [".venv", "vendor", "powerbi_mcp_server.egg-info"],
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportUnusedImport": "none"
+}

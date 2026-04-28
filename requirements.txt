@@ -1,0 +1,5 @@
+mcp>=0.1.0
+pyadomd>=0.1.1
+python-dotenv>=1.0.0
+typing-extensions>=4.0.0
+pythonnet>=3.0.0
