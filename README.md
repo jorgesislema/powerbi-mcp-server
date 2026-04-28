@@ -3,6 +3,7 @@
 Servidor [MCP](https://modelcontextprotocol.io) para inspeccionar y modificar modelos **Power BI** (ADOMD + TOM) desde GitHub Copilot u otro cliente MCP.
 
 ![CI](https://github.com/jorgesislema/powerbi-mcp-server/actions/workflows/ci.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
@@ -67,22 +68,38 @@ vendor/
 
 ---
 
-## Uso básico en tu propio proyecto
+## Usar como librería local en otro dashboard
+
+Esta es la forma más rápida de reutilizar el cliente en cualquier proyecto Python de tu máquina **sin reinstalar nada**.
+
+### Paso 1 — Apunta pip al repo local (una sola vez)
+
+```powershell
+# Desde la carpeta de tu nuevo proyecto
+pip install -e "C:\ruta\donde\clonaste\powerbi-mcp-server"
+```
+
+> Esto crea un enlace simbólico: cualquier cambio en el repo se refleja inmediatamente sin reinstalar.
+
+### Paso 2 — Importa y usa
 
 ```python
 from src.powerbi_client import PowerBIClient
 
+# Power BI Desktop debe estar abierto con el modelo cargado
 client = PowerBIClient()
-client.connect()
+client.connect()            # autodetecta el puerto local
 
-# Consulta DAX
-df = client.execute_dax("EVALUATE SUMMARIZE('ventas', 'ventas'[region])")
+# --- Consultas DAX ---
+result = client.execute_dax("EVALUATE VALUES('ventas'[region])")
+print(result)
 
-# Listar medidas
-for m in client.get_measures():
-    print(m["name"], "->", m["expression"])
+# --- Explorar el modelo ---
+print(client.get_tables())          # lista de tablas
+print(client.get_measures())        # nombre + expresión DAX
+print(client.get_model_info())      # metadata general
 
-# Crear medida nueva (via TOM)
+# --- Crear una medida nueva (via TOM, sin XMLA) ---
 client.create_measure(
     table_name="ventas",
     measure_name="Total Ventas",
@@ -90,6 +107,19 @@ client.create_measure(
     execute=False,
 )
 ```
+
+### Paso 3 — DLLs (si es una máquina nueva)
+
+```powershell
+# Desde la raíz del repo
+.\scripts\install_adomd.ps1
+```
+
+Solo se necesita hacer esto una vez por máquina Windows.
+
+### Cambiar de dashboard
+
+No hay nada que cambiar en el código: el cliente detecta automáticamente el puerto XMLA del modelo abierto en Power BI Desktop. Abre el `.pbix` que quieras y ejecuta tu script.
 
 ---
 
@@ -165,4 +195,6 @@ python -m build --wheel
 
 ## Licencia
 
-MIT
+Distribuido bajo la licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+Puedes usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del software libremente.
