@@ -1,5 +1,8 @@
+# Runtime (instala automáticamente con pip install -e .)
 mcp>=0.1.0
-pyadomd>=0.1.1
 python-dotenv>=1.0.0
 typing-extensions>=4.0.0
+
+# Windows-only: requieren DLLs ADOMD/TOM en vendor/ (ver README)
+pyadomd>=0.1.1
 pythonnet>=3.0.0

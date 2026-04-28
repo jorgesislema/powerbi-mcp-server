@@ -1,21 +1,49 @@
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# ── Secrets / credenciales (NUNCA subir) ──
 .env
-*.log
-.pytest_cache/
-# mcp.json has machine-specific absolute paths — exclude it
+.env.*
+!.env.example
+*.secret
+secrets.json
+credentials.json
+
+# ── VS Code (solo excluir el json con rutas absolutas) ──
 .vscode/mcp.json
+
+# ── Archivos temporales Windows ──
 *.pbix
+Thumbs.db
+desktop.ini
+.ven
 
-# Local virtual env used by contributors
+# ── Entornos virtuales ──
 .venv/
+venv/
+env/
 
-# Vendor DLLs for ADOMD/TOM
+# ── Vendor DLLs (Windows-only, no versionar) ──
 vendor/
 
-# Generated artifacts and caches
-artifacts/
-.mypy_cache/
+# ── Build / distribución ──
+dist/
+build/
 *.egg-info/
-.ven
+*.egg
+
+# ── Tests y cobertura ──
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# ── Mypy / linters ──
+.mypy_cache/
+.ruff_cache/
+
+# ── Artifacts generados por scripts ──
+artifacts/

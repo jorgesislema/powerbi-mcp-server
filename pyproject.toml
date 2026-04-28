@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "powerbi-mcp-server"
+version = "0.1.0"
+description = "Servidor MCP para inspeccionar y modificar modelos Power BI desde GitHub Copilot (ADOMD + TOM)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "jorgesislema", email = "jorgesislema@github.com" }
+]
+keywords = ["power-bi", "mcp", "adomd", "tom", "copilot", "dax"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Database",
+]
+dependencies = [
+    "mcp>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "typing-extensions>=4.0.0",
+    # pyadomd y pythonnet son Windows-only y requieren las DLLs ADOMD/TOM en vendor/
+    # Se instalan automáticamente pero NO funcionan sin las DLLs (ver README)
+    "pyadomd>=0.1.1; platform_system == 'Windows'",
+    "pythonnet>=3.0.0; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "build>=1.0",
+    "twine>=5.0",
+]
+
+[project.scripts]
+powerbi-mcp = "src.server:main"
+
+[project.urls]
+Homepage = "https://github.com/jorgesislema/powerbi-mcp-server"
+Repository = "https://github.com/jorgesislema/powerbi-mcp-server"
+Issues = "https://github.com/jorgesislema/powerbi-mcp-server/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+"src" = ["py.typed"]
+
+# ──────────────────────────────────────────────
+# Herramientas de desarrollo
+# ──────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "examples/*", "scripts/*"]

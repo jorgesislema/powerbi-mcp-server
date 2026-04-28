@@ -1,63 +1,168 @@
 # powerbi-mcp-server
 
-Repositorio con servidor MCP para inspeccionar modelos de Power BI y herramientas auxiliares.
+Servidor [MCP](https://modelcontextprotocol.io) para inspeccionar y modificar modelos **Power BI** (ADOMD + TOM) desde GitHub Copilot u otro cliente MCP.
 
-## Instalación de ADOMD (reproducible vía NuGet)
+![CI](https://github.com/jorgesislema/powerbi-mcp-server/actions/workflows/ci.yml/badge.svg)
 
-Este proyecto usa `pyadomd` para conectarse a modelos locales XMLA. ADOMD.NET (la DLL `AdomdClient.dll`) ahora se distribuye vía NuGet; para evitar instalar MSIs a mano se incluye un script que descarga el paquete NuGet y extrae la DLL.
+---
 
-Para extraer la DLL y copiarla a `vendor/adomd/` ejecuta (PowerShell):
+## Características
 
-```powershell
-# Desde la raíz del repo (puedes ejecutar como Administrador si deseas copiar al venv)
-.\n+\.\scripts\install_adomd.ps1
-```
+| Capacidad | API |
+|---|---|
+| Ejecutar consultas DAX | `execute_dax(dax)` |
+| Listar tablas y columnas | `get_tables()`, `get_columns(table)` |
+| Listar y crear medidas | `get_measures()`, `create_measure(...)` |
+| Aplicar TMSL | `apply_tmsl(json)` |
+| Info del modelo | `get_model_info()` |
 
-Opcionalmente puedes pasar `-CopyToVenv` para que intente copiar la DLL a `\.venv\Lib\site-packages`.
+---
 
-## Uso rápido
+## Requisitos
 
-1. Activa tu entorno virtual
+- **Python 3.10+** (Windows)
+- **Power BI Desktop** abierto (el puerto XMLA se descubre automáticamente)
+- DLLs de **ADOMD.NET** y **TOM** en `vendor/` (descarga con el script de instalación)
 
-```powershell
-(Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& ".\.venv\Scripts\Activate.ps1")
-```
+---
 
-### Verificar conexión Power BI (rápido)
+## Instalación rápida (nuevo proyecto)
 
-Si necesitas comprobar de forma reproducible que las DLLs ADOMD.NET y `pyadomd` funcionan en este equipo, ejecuta:
-
-```powershell
-python -m pip install -r requirements.txt
-python .\scripts\verify_powerbi_connection.py
-```
-
-El script buscará la instancia local de Power BI Desktop (AnalysisServicesWorkspaces), cargará las DLL en `vendor/adomd` y ejecutará una consulta DAX mínima. Devuelve JSON con detalles y errores.
-
-2. Instala dependencias Python
+### Opción A — pip desde GitHub (recomendado)
 
 ```powershell
-pip install -r requirements.txt
+pip install "git+https://github.com/jorgesislema/powerbi-mcp-server.git"
 ```
 
-3. Extrae ADOMD desde NuGet (si no lo hiciste ya)
+> Las DLLs no se incluyen en pip. Ejecuta también `install_adomd.ps1` (ver abajo).
+
+### Opción B — editable local (para desarrollo)
 
 ```powershell
-\.\scripts\install_adomd.ps1 -CopyToVenv
+git clone https://github.com/jorgesislema/powerbi-mcp-server.git
+cd powerbi-mcp-server
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
 ```
 
-4. Inicia el servidor MCP
+---
+
+## Instalar DLLs ADOMD/TOM (una sola vez por máquina)
+
+Las DLLs **no están en git**. El script las descarga desde NuGet:
+
+```powershell
+.\scripts\install_adomd.ps1
+.\scripts\install_adomd.ps1 -CopyToVenv
+```
+
+Resultado:
+
+```
+vendor/
+  adomd/  <- Microsoft.AnalysisServices.AdomdClient.dll
+  tom/    <- Microsoft.AnalysisServices.Tabular.dll (y otros)
+```
+
+---
+
+## Uso básico en tu propio proyecto
+
+```python
+from src.powerbi_client import PowerBIClient
+
+client = PowerBIClient()
+client.connect()
+
+# Consulta DAX
+df = client.execute_dax("EVALUATE SUMMARIZE('ventas', 'ventas'[region])")
+
+# Listar medidas
+for m in client.get_measures():
+    print(m["name"], "->", m["expression"])
+
+# Crear medida nueva (via TOM)
+client.create_measure(
+    table_name="ventas",
+    measure_name="Total Ventas",
+    expression="SUM(ventas[importe])",
+    execute=False,
+)
+```
+
+---
+
+## Iniciar el servidor MCP
 
 ```powershell
 python -m src.server
+powerbi-mcp
 ```
 
-## Alternativa (REST)
+Configura en `.vscode/mcp.json` (no versionado) con la ruta al ejecutable.
 
-Si no quieres depender de ADOMD.NET, puedo añadir un endpoint REST/JSON (FastAPI) para prototipado y permitir que Power BI consuma datos vía `Obtener datos > Web`.
+---
 
-## Ejemplos y vendor
+## Variables de entorno
 
-- Los scripts de ejemplo se movieron a `examples/`.
-- Las DLLs `AdomdClient.dll` y `Tabular.dll` no se versionan en este repositorio. Colócalas en `vendor/adomd/` y `vendor/tom/` si deseas usarlas localmente.
+Copia `.env.example` -> `.env`:
 
+```powershell
+Copy-Item .env.example .env
+```
+
+| Variable | Descripción |
+|---|---|
+| `POWERBI_MODE` | `local` (Desktop) o `cloud` (Service) |
+| `LOCAL_PORT` | Puerto de PBI Desktop (se autodetecta si vacio) |
+| `CLOUD_WORKSPACE_ID` | Solo para modo cloud |
+| `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET` | Solo para modo cloud |
+
+> `.env` esta excluido en `.gitignore`. Solo `.env.example` se versiona (sin valores reales).
+
+---
+
+## Estructura del repositorio
+
+```
+powerbi-mcp-server/
+├── src/
+│   ├── server.py
+│   ├── powerbi_client.py
+│   ├── tools.py
+│   └── dax_validator.py
+├── scripts/
+│   ├── install_adomd.ps1
+│   └── verify_powerbi_connection.py
+├── examples/
+├── tests/
+├── vendor/                # DLLs locales (excluido de git)
+├── .env.example           # Plantilla sin secretos
+└── pyproject.toml
+```
+
+---
+
+## Desarrollo y tests
+
+```powershell
+pytest tests/ -v
+python .\scripts\verify_powerbi_connection.py
+pip install build
+python -m build --wheel
+```
+
+---
+
+## Seguridad
+
+- **Nunca** subas a git: `.env`, `vendor/`, `artifacts/`, `.vscode/mcp.json`
+- `CLIENT_SECRET` y tokens van en `.env` local o en **GitHub Secrets**
+- Las DLLs se reinstalan con `install_adomd.ps1`
+
+---
+
+## Licencia
+
+MIT
